@@ -1,3 +1,4 @@
 .ipynb_checkpoints
 default-*.ipynb
 emojis
+__pycache__
