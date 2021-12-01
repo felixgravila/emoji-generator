@@ -30,7 +30,6 @@ def get_all_emojis(sources=sources, root_dir="emojis"):
     }
 
 
-
 # %%
 
 if __name__ == "__main__":
