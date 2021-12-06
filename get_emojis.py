@@ -15,7 +15,9 @@ base_data_dir = "emojis"
 
 emojilist_req = requests.get(emojis_url)
 soup = BeautifulSoup(emojilist_req.text, "html.parser")
-emoji_rows = soup.find("body").find("div", {"class": "main"}).find("table").find_all("tr")
+emoji_rows = (
+    soup.find("body").find("div", {"class": "main"}).find("table").find_all("tr")
+)
 
 # %%
 
@@ -29,16 +31,17 @@ for s in to_use_emoji_sources:
 
 idx_source_map = {}
 
-for i,c in enumerate(emoji_rows[2].find_all("th")):
+for i, c in enumerate(emoji_rows[2].find_all("th")):
     if c.text in to_use_emoji_sources:
         idx_source_map[i] = c.text
 
 #%%
 
+
 def get_image_for_cell(cell):
     icon = cell.find("img")
     if icon is not None:
-        b64_data = icon.attrs['src']
+        b64_data = icon.attrs["src"]
         base64_str = b64_data.split(",")[1]
         base64_bytes = base64_str.encode("UTF-8")
         return base64.decodebytes(base64_bytes)

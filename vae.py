@@ -29,7 +29,7 @@ if len(sizes) == 1:
     print(f"All ok, only size is {list(sizes.keys())[0]}")
 else:
     print(f"Needs fixing! Multiple sizes: {sizes}")
-    enforced_size = (72,72,4) # two emojis are (108,108,4)
+    enforced_size = (72, 72, 4)  # two emojis are (108,108,4)
     to_del_emojis = []
     for emoji in tqdm(emojis):
         if emoji.data.shape != enforced_size:
@@ -40,11 +40,12 @@ else:
 # %%
 
 print("Taking the emoji datas and removing alpha channel")
-emoji_datas = [e.data[:,:,:3] for e in emojis]
+emoji_datas = [e.data[:, :, :3] for e in emojis]
 
 print("Converting to tf.dataset")
 ds = tf.data.Dataset.from_tensor_slices(emoji_datas).shuffle(1000).batch(32)
 # %%
+
 
 class Sampling(L.Layer):
     """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
@@ -56,13 +57,14 @@ class Sampling(L.Layer):
         epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
 
+
 latent_dim = 20
 
 encoder_inputs = tf.keras.Input(shape=(72, 72, 3))
-x = L.Conv2D(32, (3,3), activation="relu", strides=2, padding="same")(encoder_inputs)
-x = L.Conv2D(32, (3,3), activation="relu", strides=2, padding="same")(x)
-x = L.Conv2D(64, (3,3), activation="relu", strides=2, padding="same")(encoder_inputs)
-x = L.Conv2D(64, (3,3), activation="relu", strides=2, padding="same")(x)
+x = L.Conv2D(32, (3, 3), activation="relu", strides=2, padding="same")(encoder_inputs)
+x = L.Conv2D(32, (3, 3), activation="relu", strides=2, padding="same")(x)
+x = L.Conv2D(64, (3, 3), activation="relu", strides=2, padding="same")(encoder_inputs)
+x = L.Conv2D(64, (3, 3), activation="relu", strides=2, padding="same")(x)
 x = L.Flatten()(x)
 x = L.Dense(16, activation="relu")(x)
 z_mean = L.Dense(latent_dim, name="z_mean")(x)
@@ -74,13 +76,14 @@ encoder.summary()
 latent_inputs = tf.keras.Input(shape=(latent_dim,))
 x = L.Dense(18 * 18 * 64, activation="relu")(latent_inputs)
 x = L.Reshape((18, 18, 64))(x)
-x = L.Conv2DTranspose(64, (3,3), activation="relu", strides=2, padding="same")(x)
-x = L.Conv2DTranspose(32, (3,3), activation="relu", strides=2, padding="same")(x)
-decoder_outputs = L.Conv2DTranspose(3, (3,3), activation="sigmoid", padding="same")(x)
+x = L.Conv2DTranspose(64, (3, 3), activation="relu", strides=2, padding="same")(x)
+x = L.Conv2DTranspose(32, (3, 3), activation="relu", strides=2, padding="same")(x)
+decoder_outputs = L.Conv2DTranspose(3, (3, 3), activation="sigmoid", padding="same")(x)
 decoder = tf.keras.Model(latent_inputs, decoder_outputs, name="decoder")
 decoder.summary()
 
 # %%
+
 
 class VAE(tf.keras.Model):
     def __init__(self, encoder, decoder, **kwargs):
@@ -107,7 +110,8 @@ class VAE(tf.keras.Model):
             reconstruction = self.decoder(z)
             reconstruction_loss = tf.reduce_mean(
                 tf.reduce_sum(
-                    tf.keras.losses.binary_crossentropy(data, reconstruction), axis=(1, 2)
+                    tf.keras.losses.binary_crossentropy(data, reconstruction),
+                    axis=(1, 2),
                 )
             )
             kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
@@ -123,12 +127,12 @@ class VAE(tf.keras.Model):
             "reconstruction_loss": self.reconstruction_loss_tracker.result(),
             "kl_loss": self.kl_loss_tracker.result(),
         }
-        
+
 
 # %%
 
 vae = VAE(encoder, decoder)
 vae.compile(optimizer=tf.keras.optimizers.Adam())
-vae.fit(ds, epochs=5)
+vae.fit(ds, epochs=200)
 
 # %%
