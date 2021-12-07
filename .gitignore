@@ -3,3 +3,6 @@
 default-*.ipynb
 emojis
 __pycache__
+gan_ckpts
+gan_images
+.DS_Store
